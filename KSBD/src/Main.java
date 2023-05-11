@@ -6,6 +6,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             new GuiLooks();
+
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

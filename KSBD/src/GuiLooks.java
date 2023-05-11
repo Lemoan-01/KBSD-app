@@ -20,8 +20,13 @@ public class GuiLooks extends JFrame implements ActionListener {
     URL url;
     JLabel plaatje;
 
-    //Berkenen
+    //Berekenen
     JButton knopBerekenBerekenen;
+    double gewensteBeschikbaarheid = 0;
+    int index = 0;
+    JTextArea gewenstPercentage;
+    Leverancier leon = new Leverancier();
+
 
     //ontwerpen
     ArrayList<Object> selectedUptime = new ArrayList<>();
@@ -37,6 +42,7 @@ public class GuiLooks extends JFrame implements ActionListener {
     DefaultTableModel ontwerpenBodyModel4;
     boolean booleanWeb = false;
     boolean booleanDb = false;
+
 
 
     GuiLooks() throws MalformedURLException {
@@ -163,8 +169,9 @@ public class GuiLooks extends JFrame implements ActionListener {
 
 
         //textarea 'gewenstpercentage'
-        JTextArea gewenstPercentage = new JTextArea("%");
+        gewenstPercentage = new JTextArea("0");
         gewenstPercentage.setBounds(15, 35, 70, 20);
+
 
         //text 'voer de gewenste beschikbaarheid in'
         JLabel voerIn = new JLabel("Voer de gewenste beschikbaarheid in:");
@@ -197,13 +204,15 @@ public class GuiLooks extends JFrame implements ActionListener {
         };
 
         //inhoud genereren
-        int tKosten = 0;
-        for (LeverancierDevice i : leverancierDevices) {
-            tKosten += i.getKostenEnkel();
 
-            Object[] row = {i.getNaam(), i.getFunctie(), i.getUptime(), 5 ,i.getKostenEnkel()};
-            berekenenBodyModel.insertRow(1, row);
-        }
+
+        int tKosten = 0;
+//        for (LeverancierDevice i : Functions.combo) {
+//            tKosten += i.getKostenEnkel();
+//
+//            Object[] row = {i.getNaam(), i.getFunctie(), i.getUptime(), 5 ,i.getKostenEnkel()};
+//            berekenenBodyModel.insertRow(1, row);
+//        }
 
         tabelBereken.setModel(berekenenBodyModel);
 
@@ -389,10 +398,17 @@ public class GuiLooks extends JFrame implements ActionListener {
             System.out.println("monitorgegevens opslaan...");
         }
         else if(actionSource == knopBerekenBerekenen){
-            System.out.println("berekenen benodigde devices...");
+            gewensteBeschikbaarheid = Double.parseDouble(gewenstPercentage.getText());
+            System.out.println(gewensteBeschikbaarheid);
+
+            Functions.calculateServers(leon.getLeverancierDevices(), Functions.gekozenInt, 0, 0.99998,(gewensteBeschikbaarheid/100), 0, 0);
+            System.out.println(Functions.combo);
+
+//            Functions.numTotal = 0;
+//            this.index = 0;
+
         }
         else if(actionSource == knopToevoegenOntwerpen){
-            System.out.println("toevoegen aan ontwerp...");
 
             //extract de data van geselecteerde row en voeg die toe aan tabel 4
             if(tabelOntwerpen1.getSelectedRow() != -1) {

@@ -3,6 +3,7 @@ public class LeverancierDevice {
     private String functie;
     private double Tuptime;
     private int kostenEnkel;
+    private int aantal;
 
     public LeverancierDevice(String naam, String functie, double Tuptime, int kostenEnkel){
         this.naam = naam;
@@ -25,5 +26,9 @@ public class LeverancierDevice {
 
     public int getKostenEnkel() {
         return kostenEnkel;
+    }
+
+    public int getAantal() {
+        return aantal;
     }
 }
