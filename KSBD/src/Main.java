@@ -10,5 +10,7 @@ public class Main {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+
+//        new saveMonitoring(98.78, "Werkt het vandaag ook?");
     }
 }

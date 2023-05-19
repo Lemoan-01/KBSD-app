@@ -4,45 +4,60 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import javax.swing.JFrame;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
 
 public class GuiLooks extends JFrame implements ActionListener {
-    Color headerKleur = new Color(184, 207, 229);
-
+    //GUI
+    private Color headerKleur = new Color(184, 207, 229);
+    private JFrame scherm;
 
     //Monitoring
-    JButton knopVergelijkenMonitoring;
-    JButton knopOpslaanMonitoring;
-    JButton knopVerversenMonitoring;
-    URL url;
-    JLabel plaatje;
+    private JButton knopVergelijkenMonitoring;
+    private JButton knopOpslaanMonitoring;
+    private JButton knopVerversenMonitoring;
+    private JButton knopGrafiekMonitoren;
+    private URL url;
+    private JLabel plaatje;
 
     //Berekenen
-    JButton knopBerekenBerekenen;
-    double gewensteBeschikbaarheid = 0;
-    int index = 0;
-    JTextArea gewenstPercentage;
-    Leverancier leon = new Leverancier();
-
+    private JButton knopBerekenBerekenen;
+    private JLabel totaalKosten;
+    private double gewensteBeschikbaarheid = 0;
+    private int tKosten = 0;
+    private JTextArea gewenstPercentage;
+    private Leverancier leverancierWilco = new Leverancier();
+    private DefaultTableModel berekenenBodyModel;
 
     //ontwerpen
-    ArrayList<Object> selectedUptime = new ArrayList<>();
-    JLabel labelBeschikbaarheidOntwerpen = new JLabel();
-    JButton knopLadenOntwerpen;
-    JButton knopOpslaanOntwerpen;
-    JButton knopToevoegenOntwerpen;
-    JButton knopResetOntwerpen;
-    JTable tabelOntwerpen1;
-    JTable tabelOntwerpen2;
-    JTable tabelOntwerpen3;
-    JTable tabelOntwerpen4;
-    DefaultTableModel ontwerpenBodyModel4;
-    boolean booleanWeb = false;
-    boolean booleanDb = false;
-
+    private ArrayList<Object> selectedUptime = new ArrayList<>();
+    private JLabel labelBeschikbaarheidOntwerpen = new JLabel();
+    private JButton knopLadenOntwerpen;
+    private JButton knopOpslaanOntwerpen;
+    private JButton knopToevoegenOntwerpen;
+    private JButton knopResetOntwerpen;
+    private JTable tabelOntwerpen1;
+    private JTable tabelOntwerpen2;
+    private JTable tabelOntwerpen3;
+    private JTable tabelOntwerpen4;
+    private DefaultTableModel ontwerpenBodyModel4;
+    private boolean booleanWeb = false;
+    private boolean booleanDb = false;
+    private JFileChooser chooser;
 
 
     GuiLooks() throws MalformedURLException {
@@ -55,7 +70,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         ArrayList<LeverancierDevice> leverancierDevices = new ArrayList<>(leverancier.getLeverancierDevices());
 
         //GUI
-        JFrame scherm = new JFrame();
+        scherm = new JFrame();
         scherm.setResizable(false);
         scherm.setSize(800, 600);
         scherm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,13 +84,19 @@ public class GuiLooks extends JFrame implements ActionListener {
 //monitoring----------------------------------------------------------------
         JLabel monitoring = new JLabel();//tablad monitoring
         monitoring.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder()));
+        JEditorPane janet = new JEditorPane();
 
-        //grafiek
-        try {
-            url = new URL("http://3.bp.blogspot.com/-LxZM5TD1Eb8/US53AyIr8PI/AAAAAAAACd0/UN5jwhK-Wqc/s1600/CHART.GIF");
+        try { //gif in monitoring
+            url = new URL("http://192.168.1.194:3000/d/UDdpyzz7z/prometheus-2-0-stats?orgId=1&refresh=1m&from=1684498096737&to=1684501696738&viewPanel=3");
+            Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+            BufferedImage capture = new Robot().createScreenCapture(screenRect);
+
+            File imageFile = new File("single-screen.bmp");
+
+
             Icon icon = new ImageIcon(url);
             plaatje = new JLabel(icon);
-            plaatje.setBounds(15, 10, 250,250);
+            plaatje.setBounds(15, 10, 450,200);
         } catch (Exception e){
             System.out.println("plaatje werkte neit");
         }
@@ -99,19 +120,23 @@ public class GuiLooks extends JFrame implements ActionListener {
         knopVergelijkenMonitoring.addActionListener(this);
 
         knopVerversenMonitoring = new JButton("Verversen");
-        knopVerversenMonitoring.setBounds(650,80,120,35);
+        knopVerversenMonitoring.setBounds(15,80,120,30);
         knopVerversenMonitoring.addActionListener(this);
+
+        knopGrafiekMonitoren = new JButton("Gedetailleerd");
+        knopGrafiekMonitoren.setBounds(15, 110, 120, 30);
+        knopGrafiekMonitoren.addActionListener(this);
 
         //Opmerkingen
         double percentage = 99.7;
         int minuten = 3;
 
         JLabel textMonitor = new JLabel("De huidige beschikbaarheid is: " + percentage + "%");
-        textMonitor.setBounds(450,30,500,30);
+        textMonitor.setBounds(15,30,500,30);
         textMonitor.setFont(new Font("Calibri", Font.PLAIN, 20));
 
         JLabel textGeleden = new JLabel( "(" + minuten + " minuten geleden)");
-        textGeleden.setBounds(650,50,200,15);
+        textGeleden.setBounds(15,50,200,15);
 
         JTextField opmerking = new JTextField("Eventuele opmerkingen");
         opmerking.setBounds(475, 270, 275, 150);
@@ -156,10 +181,10 @@ public class GuiLooks extends JFrame implements ActionListener {
         //tabledata
         Object[] columnsTabelBereken = {"Nep", "Nep", "Nep", "Nep", "Nep"};
         Object[][] dataBerekenen = {
-                {"pfSense", "firewall", 99.99, 1, "1200"}
+                {"pfSense", "firewall", 99.99, "4000", "1"}
         };
         Object[][] columnsBerekenHeader = {
-                {"Device", "Functie", "Uptime", "Aantal", "Kosten"}
+                {"Device", "Functie", "Uptime", "Kosten", "Aantal"}
         };
 
         //button 'knopBerekenBerekenen'
@@ -169,7 +194,7 @@ public class GuiLooks extends JFrame implements ActionListener {
 
 
         //textarea 'gewenstpercentage'
-        gewenstPercentage = new JTextArea("0");
+        gewenstPercentage = new JTextArea("99.7");
         gewenstPercentage.setBounds(15, 35, 70, 20);
 
 
@@ -180,10 +205,10 @@ public class GuiLooks extends JFrame implements ActionListener {
 
         //table
         JTable tabelBereken = new JTable(dataBerekenen, columnsTabelBereken);
-        tabelBereken.setBounds(15, 116, 300, 300);
+        tabelBereken.setBounds(15, 116, 350, 300);
 
         JTable tabelBerekenHeader = new JTable(columnsBerekenHeader, columnsTabelBereken);
-        tabelBerekenHeader.setBounds(15, 100, 300, 16);
+        tabelBerekenHeader.setBounds(15, 100, 350, 16);
         tabelBerekenHeader.setBackground(headerKleur);
 
 
@@ -196,29 +221,18 @@ public class GuiLooks extends JFrame implements ActionListener {
         };
         tabelBerekenHeader.setModel(berekenenHeaderModel);
 
-        DefaultTableModel berekenenBodyModel = new DefaultTableModel(dataBerekenen, columnsTabelBereken) {
+        berekenenBodyModel = new DefaultTableModel(dataBerekenen, columnsTabelBereken) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        //inhoud genereren
-
-
-        int tKosten = 0;
-//        for (LeverancierDevice i : Functions.combo) {
-//            tKosten += i.getKostenEnkel();
-//
-//            Object[] row = {i.getNaam(), i.getFunctie(), i.getUptime(), 5 ,i.getKostenEnkel()};
-//            berekenenBodyModel.insertRow(1, row);
-//        }
-
         tabelBereken.setModel(berekenenBodyModel);
 
         //text 'totale kosten'
         String totaalK = "Totale kosten: $"+ tKosten;
-        JLabel totaalKosten = new JLabel(totaalK);
+        totaalKosten = new JLabel(totaalK);
         totaalKosten.setBounds(215, 50, 251, 10);
 
 //ontwerpen----------------------------------------------------------------
@@ -343,6 +357,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         monitoring.add(tabelMonitor);
         monitoring.add(knopOpslaanMonitoring);
         monitoring.add(knopVergelijkenMonitoring);
+        monitoring.add(knopGrafiekMonitoren);
         monitoring.add(opmerking);
         monitoring.add(plaatje);
         monitoring.add(textMonitor);
@@ -380,6 +395,16 @@ public class GuiLooks extends JFrame implements ActionListener {
 
     }
 
+    private static void saveImageToFile(InputStream inputStream, String outputPath) throws IOException {
+        try (OutputStream outputStream = new FileOutputStream(outputPath)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object actionSource = e.getSource();
@@ -388,8 +413,21 @@ public class GuiLooks extends JFrame implements ActionListener {
             new GuiLooksVergelijken();
             System.out.println("window vergelijken openen...");
         }
+        else if(actionSource == knopGrafiekMonitoren){
+
+            //fucking browser
+
+
+            //grafiek GraphMonitor aanroepen
+            EventQueue.invokeLater(() -> {
+
+                var ex = new GraphMonitor();
+                ex.setVisible(true);
+            });
+        }
         else if(actionSource == knopLadenOntwerpen){
             System.out.println("oude projecten laden...");
+            // Show dialog; this method does not return until dialog is closed
         }
         else if(actionSource == knopOpslaanOntwerpen){
             System.out.println("Project opslaan...");
@@ -400,13 +438,33 @@ public class GuiLooks extends JFrame implements ActionListener {
         else if(actionSource == knopBerekenBerekenen){
             gewensteBeschikbaarheid = Double.parseDouble(gewenstPercentage.getText());
             System.out.println(gewensteBeschikbaarheid);
-
-            Functions.calculateServers(leon.getLeverancierDevices(), Functions.gekozenInt, 0, 0.99998,(gewensteBeschikbaarheid/100), 0, 0);
+            Functions.gekozenInt.clear();
+            Functions.calculateServers(leverancierWilco.getLeverancierDevices(), Functions.gekozenInt, 0, 0.99998,(gewensteBeschikbaarheid/100), 0, 0);
             System.out.println(Functions.combo);
 
-//            Functions.numTotal = 0;
-//            this.index = 0;
+//            Object[][] dataOntwerpen3 = {
+//                    {Functions.combo.get(1).(), Functions.combo.get(1).getUptime()},
+//                    {Functions.combo.get(2)., Functions.combo.get(2).getUptime()},
+//                    {Functions.combo.get(3).getNaam(), Functions.combo.get(3).getUptime()}
+//            };
 
+            for (int j = 0; j < Functions.combo.size(); j++){ //combo kan niet groter dan 4 worden (no duplicates)
+                Object[] insertDevice = {
+                        Functions.combo.get(j).getNaam(), Functions.combo.get(j).getFunctie(), Functions.combo.get(j).getUptime(), Functions.combo.get(j).getKostenEnkel() * Functions.combo.get(j).getAantal(), Functions.combo.get(j).getAantal()
+                };
+
+                berekenenBodyModel.insertRow(0, insertDevice);
+            }
+
+            for (LeverancierDevice i : Functions.combo) { //totale kosten berekenen
+                tKosten += i.getKostenEnkel() * i.getAantal() + 4000;
+                totaalKosten.setText("Totale kosten: $"+tKosten);
+
+                System.out.println(tKosten);
+            }
+
+            Functions.gekozenInt.clear();
+            repaint();
         }
         else if(actionSource == knopToevoegenOntwerpen){
 

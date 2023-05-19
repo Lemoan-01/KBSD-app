@@ -12,6 +12,14 @@ public class LeverancierDevice {
         this.kostenEnkel = kostenEnkel;
     }
 
+    public LeverancierDevice(String naam, String functie, double Tuptime, int kostenEnkel, int aantal){
+        this.naam = naam;
+        this.functie = functie;
+        this.Tuptime = Tuptime;
+        this.kostenEnkel = kostenEnkel;
+        this.aantal = aantal;
+    }
+
     public String getNaam() {
         return naam;
     }
@@ -30,5 +38,10 @@ public class LeverancierDevice {
 
     public int getAantal() {
         return aantal;
+    }
+
+    @Override
+    public String toString() {
+        return "Device: "+getNaam()+" "+getAantal();
     }
 }
