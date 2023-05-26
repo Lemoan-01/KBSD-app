@@ -4,21 +4,18 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpResponse;
+import java.net.URI;
 import java.util.ArrayList;
 import javax.swing.JFrame;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
+import java.awt.AWTException;
+import java.awt.Desktop;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 
 
 public class GuiLooks extends JFrame implements ActionListener {
@@ -31,8 +28,8 @@ public class GuiLooks extends JFrame implements ActionListener {
     private JButton knopOpslaanMonitoring;
     private JButton knopVerversenMonitoring;
     private JButton knopGrafiekMonitoren;
-    private URL url;
-    private JLabel plaatje;
+    private JTextField opmerking;
+
 
     //Berekenen
     private JButton knopBerekenBerekenen;
@@ -45,20 +42,26 @@ public class GuiLooks extends JFrame implements ActionListener {
 
     //ontwerpen
     private ArrayList<Object> selectedUptime = new ArrayList<>();
+    private ArrayList<Object> saveComboNames = new ArrayList<>();
+    private ArrayList<Object> saveComboUptimes = new ArrayList<>();
+    ArrayList<Object> selectedUptimeDb = new ArrayList<>();
+    ArrayList<Object> selectedUptimeWeb = new ArrayList<>();
+    ArrayList<Object> selectedUptimeFirewall = new ArrayList<>();
     private JLabel labelBeschikbaarheidOntwerpen = new JLabel();
     private JButton knopLadenOntwerpen;
     private JButton knopOpslaanOntwerpen;
     private JButton knopToevoegenOntwerpen;
     private JButton knopResetOntwerpen;
+    private JButton knopVerwijderOntwerpen;
+    private JButton setTitle;
+    private JButton getTitle;
     private JTable tabelOntwerpen1;
     private JTable tabelOntwerpen2;
     private JTable tabelOntwerpen3;
     private JTable tabelOntwerpen4;
+    private JTextField naamLaden;
+    private JTextField naamOpslaan;
     private DefaultTableModel ontwerpenBodyModel4;
-    private boolean booleanWeb = false;
-    private boolean booleanDb = false;
-    private JFileChooser chooser;
-
 
     GuiLooks() throws MalformedURLException {
         //geregistreerde devices uit netwerk ophalen
@@ -86,28 +89,13 @@ public class GuiLooks extends JFrame implements ActionListener {
         monitoring.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder()));
         JEditorPane janet = new JEditorPane();
 
-        try { //gif in monitoring
-            url = new URL("http://192.168.1.194:3000/d/UDdpyzz7z/prometheus-2-0-stats?orgId=1&refresh=1m&from=1684498096737&to=1684501696738&viewPanel=3");
-            Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-            BufferedImage capture = new Robot().createScreenCapture(screenRect);
-
-            File imageFile = new File("single-screen.bmp");
-
-
-            Icon icon = new ImageIcon(url);
-            plaatje = new JLabel(icon);
-            plaatje.setBounds(15, 10, 450,200);
-        } catch (Exception e){
-            System.out.println("plaatje werkte neit");
-        }
-
         //Data voor header
-        Object[] columsTabelMonitoring = {"Nep", "Nep", "Nep"};
+        Object[] columsTabelMonitoring = {"Nep", "Nep"};
         Object[][] dataMonitoring = {
-                {"pfSense", "193.167.12.3", "Online"}
+                {"pfSense", "193.167.12.3"}
         };
         Object[][] columsMonitoringHeader = {
-                {"Server", "IPv4", "Status"}
+                {"Server", "IPv4"}
         };
 
         //Knoppen
@@ -119,26 +107,13 @@ public class GuiLooks extends JFrame implements ActionListener {
         knopVergelijkenMonitoring.setBounds(475, 420, 275, 30);
         knopVergelijkenMonitoring.addActionListener(this);
 
-        knopVerversenMonitoring = new JButton("Verversen");
-        knopVerversenMonitoring.setBounds(15,80,120,30);
-        knopVerversenMonitoring.addActionListener(this);
-
-        knopGrafiekMonitoren = new JButton("Gedetailleerd");
-        knopGrafiekMonitoren.setBounds(15, 110, 120, 30);
+        knopGrafiekMonitoren = new JButton("Bekijk online");
+        knopGrafiekMonitoren.setBounds(15, 30, 200, 30);
         knopGrafiekMonitoren.addActionListener(this);
 
         //Opmerkingen
-        double percentage = 99.7;
-        int minuten = 3;
 
-        JLabel textMonitor = new JLabel("De huidige beschikbaarheid is: " + percentage + "%");
-        textMonitor.setBounds(15,30,500,30);
-        textMonitor.setFont(new Font("Calibri", Font.PLAIN, 20));
-
-        JLabel textGeleden = new JLabel( "(" + minuten + " minuten geleden)");
-        textGeleden.setBounds(15,50,200,15);
-
-        JTextField opmerking = new JTextField("Eventuele opmerkingen");
+        opmerking = new JTextField("Eventuele opmerkingen");
         opmerking.setBounds(475, 270, 275, 150);
 
         //Tabelheader
@@ -179,12 +154,12 @@ public class GuiLooks extends JFrame implements ActionListener {
                 BorderFactory.createEtchedBorder()));
 
         //tabledata
-        Object[] columnsTabelBereken = {"Nep", "Nep", "Nep", "Nep", "Nep"};
+        Object[] columnsTabelBereken = {"Nep", "Nep", "Nep", "Nep"};
         Object[][] dataBerekenen = {
-                {"pfSense", "firewall", 99.99, "4000", "1"}
+                {"pfSense", "firewall", 99.99, "4000"}
         };
         Object[][] columnsBerekenHeader = {
-                {"Device", "Functie", "Uptime", "Kosten", "Aantal"}
+                {"Device", "Functie", "Uptime", "Kosten"}
         };
 
         //button 'knopBerekenBerekenen'
@@ -231,7 +206,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         tabelBereken.setModel(berekenenBodyModel);
 
         //text 'totale kosten'
-        String totaalK = "Totale kosten: $"+ tKosten;
+        String totaalK = "Totale kosten: $" + tKosten;
         totaalKosten = new JLabel(totaalK);
         totaalKosten.setBounds(215, 50, 251, 10);
 
@@ -248,10 +223,10 @@ public class GuiLooks extends JFrame implements ActionListener {
         };
 
         JLabel textFirewall = new JLabel("Selecteer een firewall: ");
-        textFirewall.setBounds(15,15,220,16);
+        textFirewall.setBounds(15, 15, 220, 16);
 
         JTable tabelOntwerpenHeader1 = new JTable(columsOntwerpenHeader1, columsTabelOntwerpen1);
-        tabelOntwerpenHeader1.setBounds(15,35,220,16);
+        tabelOntwerpenHeader1.setBounds(15, 35, 220, 16);
         tabelOntwerpenHeader1.setBackground(headerKleur);
 
         tabelOntwerpen1 = new JTable(dataOntwerpen1, columsTabelOntwerpen1);
@@ -270,10 +245,10 @@ public class GuiLooks extends JFrame implements ActionListener {
         };
 
         JLabel textWebserver = new JLabel("Selecteer een webserver: ");
-        textWebserver.setBounds(250,15,220,16);
+        textWebserver.setBounds(250, 15, 220, 16);
 
         JTable tabelOntwerpenHeader2 = new JTable(columsOntwerpenHeader2, columsTabelOntwerpen2);
-        tabelOntwerpenHeader2.setBounds(250,35,220,16);
+        tabelOntwerpenHeader2.setBounds(250, 35, 220, 16);
         tabelOntwerpenHeader2.setBackground(headerKleur);
 
         tabelOntwerpen2 = new JTable(dataOntwerpen2, columsTabelOntwerpen2);
@@ -292,10 +267,10 @@ public class GuiLooks extends JFrame implements ActionListener {
         };
 
         JLabel textDatabase = new JLabel("Selecteer een database: ");
-        textDatabase.setBounds(485,15,220,16);
+        textDatabase.setBounds(485, 15, 220, 16);
 
         JTable tabelOntwerpenHeader3 = new JTable(columsOntwerpenHeader3, columsTabelOntwerpen3);
-        tabelOntwerpenHeader3.setBounds(485,35,220,16);
+        tabelOntwerpenHeader3.setBounds(485, 35, 220, 16);
         tabelOntwerpenHeader3.setBackground(headerKleur);
 
         tabelOntwerpen3 = new JTable(dataOntwerpen3, columsTabelOntwerpen3);
@@ -342,9 +317,14 @@ public class GuiLooks extends JFrame implements ActionListener {
         knopToevoegenOntwerpen.setBounds(650, 260, 100, 25);
         knopToevoegenOntwerpen.addActionListener(this);
 
-        //reset ontwerp
-        knopResetOntwerpen = new JButton("Verwijder");
-        knopResetOntwerpen.setBounds(650, 290, 100, 25);
+        //verwijder specifiek deel ontwerp
+        knopVerwijderOntwerpen = new JButton("Verwijder");
+        knopVerwijderOntwerpen.setBounds(650, 290, 100, 25);
+        knopVerwijderOntwerpen.addActionListener(this);
+
+        //reset volledig ontwerp
+        knopResetOntwerpen = new JButton("Reset");
+        knopResetOntwerpen.setBounds(650, 320, 100, 25);
         knopResetOntwerpen.addActionListener(this);
 
         //beschikbaarheid berekenen (refresh is automatisch)
@@ -359,10 +339,6 @@ public class GuiLooks extends JFrame implements ActionListener {
         monitoring.add(knopVergelijkenMonitoring);
         monitoring.add(knopGrafiekMonitoren);
         monitoring.add(opmerking);
-        monitoring.add(plaatje);
-        monitoring.add(textMonitor);
-        monitoring.add(textGeleden);
-        monitoring.add(knopVerversenMonitoring);
         tablad.addTab("Monitoring", monitoring);
 
         //add in all the stuff berekenen
@@ -388,6 +364,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         ontwerpen.add(labelBeschikbaarheidOntwerpen);
         ontwerpen.add(textFirewall);
         ontwerpen.add(knopToevoegenOntwerpen);
+        ontwerpen.add(knopVerwijderOntwerpen);
         ontwerpen.add(knopResetOntwerpen);
         ontwerpen.add(knopLadenOntwerpen);
         ontwerpen.add(knopOpslaanOntwerpen);
@@ -395,144 +372,259 @@ public class GuiLooks extends JFrame implements ActionListener {
 
     }
 
-    private static void saveImageToFile(InputStream inputStream, String outputPath) throws IOException {
-        try (OutputStream outputStream = new FileOutputStream(outputPath)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         Object actionSource = e.getSource();
 
-        if(actionSource == knopVergelijkenMonitoring) {
+        if (actionSource == knopVergelijkenMonitoring) {
             new GuiLooksVergelijken();
             System.out.println("window vergelijken openen...");
-        }
-        else if(actionSource == knopGrafiekMonitoren){
+        } else if (actionSource == knopGrafiekMonitoren) {
 
-            //fucking browser
+            //browsermoment
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                try {
+                    Desktop.getDesktop().browse(new URI("http://192.168.1.194:3000/d/rYdddlPWka/node-exporter-fullv2?orgId=1"));
 
+                    Thread.sleep(2000);
 
-            //grafiek GraphMonitor aanroepen
-            EventQueue.invokeLater(() -> {
-
-                var ex = new GraphMonitor();
-                ex.setVisible(true);
-            });
-        }
-        else if(actionSource == knopLadenOntwerpen){
+                    Robot robot = new Robot();
+                    typeText(robot, "guest");
+                    robot.keyPress(KeyEvent.VK_TAB);
+                    robot.keyRelease(KeyEvent.VK_TAB);
+                    typeText(robot, "guest"); //
+                    robot.keyPress(KeyEvent.VK_ENTER);
+                    robot.keyRelease(KeyEvent.VK_ENTER);
+                } catch (IOException | URISyntaxException | AWTException | InterruptedException mama) {
+                    mama.printStackTrace();
+                }
+            }
+        } else if (actionSource == knopLadenOntwerpen) {
             System.out.println("oude projecten laden...");
-            // Show dialog; this method does not return until dialog is closed
-        }
-        else if(actionSource == knopOpslaanOntwerpen){
-            System.out.println("Project opslaan...");
-        }
-        else if(actionSource == knopOpslaanMonitoring){
-            System.out.println("monitorgegevens opslaan...");
-        }
-        else if(actionSource == knopBerekenBerekenen){
+
+            //vraag file naam op
+            JDialog d = new JDialog(scherm, "Naam: ");
+            d.setSize(260, 80);
+            d.setResizable(false);
+            d.setVisible(true);
+
+            naamLaden = new JTextField();
+            naamLaden.setBounds(5, 10, 90, 30);
+            d.add(naamLaden);
+
+            getTitle = new JButton("laad");
+            getTitle.setBounds(100, 10, 90, 30);
+            getTitle.addActionListener(this);
+            d.add(getTitle);
+        } else if (actionSource == getTitle) {
+            this.dispose(); //no worki
+            String fileName = naamLaden.getText();
+
+            if (fileName != null && !fileName.equals(" ")) {
+                try {
+                    ArrayList<String> readLines = read(fileName);
+                    for (String line : readLines) {
+                        String[] text = line.split(" ");
+                        ontwerpenBodyModel4.insertRow(0, text);
+                    }
+
+                } catch (Exception noFile) {
+                    System.out.println("Filename no workie");
+                }
+            } else {
+                System.out.println("naam is niet goei");
+            }
+
+            //herbereken uptime
+            ArrayList<Object> uptimesDB = new ArrayList<>();
+            ArrayList<Object> uptimesW = new ArrayList<>();
+            ArrayList<Object> uptimesF = new ArrayList<>();
+
+            for (int i = 0; i <= ontwerpenBodyModel4.getRowCount() - 1; i++) {
+                String content = (ontwerpenBodyModel4.getValueAt(i, 0)).toString();
+
+                if (content.contains("DB")) {
+                    uptimesDB.add(ontwerpenBodyModel4.getValueAt(i, 1));
+                } else if (content.contains("W")) {
+                    uptimesW.add(ontwerpenBodyModel4.getValueAt(i, 1));
+                } else if (content.contains("pfSense")) {
+                    uptimesF.add(ontwerpenBodyModel4.getValueAt(i, 1));
+                }
+            }
+
+            String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(uptimesF, uptimesW, uptimesDB) + "%";
+            labelBeschikbaarheidOntwerpen.setText(textB);
+        } else if (actionSource == knopOpslaanOntwerpen) {
+            //vraag titel ontwerp op
+            JDialog d = new JDialog(scherm, "Naam: ");
+            d.setSize(260, 80);
+            d.setResizable(false);
+            d.setVisible(true);
+
+            naamOpslaan = new JTextField();
+            naamOpslaan.setBounds(5, 10, 90, 30);
+            d.add(naamOpslaan);
+
+            setTitle = new JButton("Ok");
+            setTitle.setBounds(100, 10, 90, 30);
+            setTitle.addActionListener(this);
+            d.add(setTitle);
+
+            for (int i = 0; i <= ontwerpenBodyModel4.getRowCount() - 1; i++) {
+                saveComboNames.add(ontwerpenBodyModel4.getValueAt(i, 0));
+            }
+            for (int i = 0; i <= ontwerpenBodyModel4.getRowCount() - 1; i++) {
+                saveComboUptimes.add(ontwerpenBodyModel4.getValueAt(i, 1));
+            }
+        } else if (actionSource == setTitle) {
+            this.dispose();
+            String fileName = naamOpslaan.getText();
+
+            if (fileName != null && !fileName.equals(" ")) {
+                try {
+                    write(fileName, saveComboNames, saveComboUptimes);
+                } catch (Exception noFile) {
+                    System.out.println("Filename no workie");
+                }
+            } else {
+                System.out.println("naam is niet goei");
+            }
+        } else if (actionSource == knopOpslaanMonitoring) {
+
+            String bijzonderheden = opmerking.getText();
+
+            new saveMonitoring(100.00, bijzonderheden);
+        } else if (actionSource == knopBerekenBerekenen) {
+
+            berekenenBodyModel.setRowCount(0);
+
+            Object[] firewall =
+                    {leverancierWilco.getLeverancierDevices().get(0).getNaam(), leverancierWilco.getLeverancierDevices().get(0).getFunctie(), leverancierWilco.getLeverancierDevices().get(0).getUptime(), leverancierWilco.getLeverancierDevices().get(0).getKostenEnkel()};
+            berekenenBodyModel.insertRow(0, firewall);
+
             gewensteBeschikbaarheid = Double.parseDouble(gewenstPercentage.getText());
-            System.out.println(gewensteBeschikbaarheid);
-            Functions.gekozenInt.clear();
-            Functions.calculateServers(leverancierWilco.getLeverancierDevices(), Functions.gekozenInt, 0, 0.99998,(gewensteBeschikbaarheid/100), 0, 0);
-            System.out.println(Functions.combo);
+            Functions.backtrackEerst(gewensteBeschikbaarheid);
 
-//            Object[][] dataOntwerpen3 = {
-//                    {Functions.combo.get(1).(), Functions.combo.get(1).getUptime()},
-//                    {Functions.combo.get(2)., Functions.combo.get(2).getUptime()},
-//                    {Functions.combo.get(3).getNaam(), Functions.combo.get(3).getUptime()}
-//            };
+            int kostenPrint = Functions.maxCost + leverancierWilco.getLeverancierDevices().get(0).getKostenEnkel();
+            totaalKosten.setText("Totale kosten: $" + kostenPrint);
 
-            for (int j = 0; j < Functions.combo.size(); j++){ //combo kan niet groter dan 4 worden (no duplicates)
+
+            for (int j = 0; j < Functions.serversNaamFinal.size(); j++) { //combo kan niet groter dan 4 worden (no duplicates)
                 Object[] insertDevice = {
-                        Functions.combo.get(j).getNaam(), Functions.combo.get(j).getFunctie(), Functions.combo.get(j).getUptime(), Functions.combo.get(j).getKostenEnkel() * Functions.combo.get(j).getAantal(), Functions.combo.get(j).getAantal()
+                        Functions.serversNaamFinal.get(j), Functions.serversFunctieFinal.get(j), Functions.serversUptimeFinal.get(j), Functions.serversKostenFinal.get(j)
                 };
 
                 berekenenBodyModel.insertRow(0, insertDevice);
             }
-
-            for (LeverancierDevice i : Functions.combo) { //totale kosten berekenen
-                tKosten += i.getKostenEnkel() * i.getAantal() + 4000;
-                totaalKosten.setText("Totale kosten: $"+tKosten);
-
-                System.out.println(tKosten);
-            }
-
-            Functions.gekozenInt.clear();
             repaint();
-        }
-        else if(actionSource == knopToevoegenOntwerpen){
+        } else if (actionSource == knopToevoegenOntwerpen) {
 
             //extract de data van geselecteerde row en voeg die toe aan tabel 4
-            if(tabelOntwerpen1.getSelectedRow() != -1) {
+            if (tabelOntwerpen1.getSelectedRow() != -1) {
                 String naamSelected = tabelOntwerpen1.getValueAt(tabelOntwerpen1.getSelectedRow(), 0).toString();
-                Object uptimeSelected = tabelOntwerpen1.getValueAt(tabelOntwerpen1.getSelectedRow(), 1);
+                Object uptimeSelectedFirewall = tabelOntwerpen1.getValueAt(tabelOntwerpen1.getSelectedRow(), 1);
 
-                Object[] rowData = {naamSelected, uptimeSelected};
-                selectedUptime.add(tabelOntwerpen1.getValueAt(tabelOntwerpen1.getSelectedRow(), 1));
+                Object[] rowData = {naamSelected, uptimeSelectedFirewall};
+                selectedUptimeFirewall.add(tabelOntwerpen1.getValueAt(tabelOntwerpen1.getSelectedRow(), 1));
                 ontwerpenBodyModel4.insertRow(0, rowData);
-                System.out.println("toevoegen "+naamSelected);
 
                 tabelOntwerpen1.clearSelection();
-                String textB = "De beschikbaarheid is "+ Functions.beschikbaarheidOntwerp(selectedUptime, booleanWeb, booleanDb) + "%";
+                String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeDb, selectedUptimeWeb) + "%";
                 labelBeschikbaarheidOntwerpen.setText(textB);
                 repaint();
             }
 
-            if (tabelOntwerpen2.getSelectedRow() != -1){
-                booleanWeb = true;
-
+            if (tabelOntwerpen2.getSelectedRow() != -1) {
                 String naamSelected = tabelOntwerpen2.getValueAt(tabelOntwerpen2.getSelectedRow(), 0).toString();
-                Object uptimeSelected = tabelOntwerpen2.getValueAt(tabelOntwerpen2.getSelectedRow(), 1);
+                Object uptimeSelectedDb = tabelOntwerpen2.getValueAt(tabelOntwerpen2.getSelectedRow(), 1);
 
-                Object[] rowData = {naamSelected, uptimeSelected};
-                selectedUptime.add(tabelOntwerpen2.getValueAt(tabelOntwerpen2.getSelectedRow(), 1));
+                Object[] rowData = {naamSelected, uptimeSelectedDb};
+                selectedUptimeDb.add(tabelOntwerpen2.getValueAt(tabelOntwerpen2.getSelectedRow(), 1));
                 ontwerpenBodyModel4.insertRow(0, rowData);
-                System.out.println("toevoegen "+naamSelected);
 
 
                 tabelOntwerpen2.clearSelection();
-                String textB = "De beschikbaarheid is "+ Functions.beschikbaarheidOntwerp(selectedUptime, booleanWeb, booleanDb) + "%";
+                String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeDb, selectedUptimeWeb) + "%";
                 labelBeschikbaarheidOntwerpen.setText(textB);
                 repaint();
             }
-            if (tabelOntwerpen3.getSelectedRow() != -1){
-                booleanDb = true;
-
+            if (tabelOntwerpen3.getSelectedRow() != -1) {
                 String naamSelected = tabelOntwerpen3.getValueAt(tabelOntwerpen3.getSelectedRow(), 0).toString();
-                Object uptimeSelected = tabelOntwerpen3.getValueAt(tabelOntwerpen3.getSelectedRow(), 1);
+                Object uptimeSelectedWeb = tabelOntwerpen3.getValueAt(tabelOntwerpen3.getSelectedRow(), 1);
 
-                Object[] rowData = {naamSelected, uptimeSelected};
-                selectedUptime.add(tabelOntwerpen3.getValueAt(tabelOntwerpen3.getSelectedRow(), 1));
+                Object[] rowData = {naamSelected, uptimeSelectedWeb};
+                selectedUptimeWeb.add(tabelOntwerpen3.getValueAt(tabelOntwerpen3.getSelectedRow(), 1));
                 ontwerpenBodyModel4.insertRow(0, rowData);
-                System.out.println("toevoegen "+naamSelected);
 
                 tabelOntwerpen3.clearSelection();
-                String textB = "De beschikbaarheid is "+ Functions.beschikbaarheidOntwerp(selectedUptime, booleanWeb, booleanDb) + "%";
+                String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeWeb, selectedUptimeDb) + "%";
                 labelBeschikbaarheidOntwerpen.setText(textB);
                 repaint();
             }
-        }
-        else if(actionSource == knopVerversenMonitoring){
-            System.out.println("Verversen beschikbaarheid");
-        }
-        else if (actionSource == knopResetOntwerpen){
-            try {
-                ontwerpenBodyModel4.removeRow(0);
-                selectedUptime.remove(0);
+        } else if (actionSource == knopVerwijderOntwerpen) {
+                double selectedUptime = (double) tabelOntwerpen4.getValueAt(tabelOntwerpen4.getSelectedRow(), 1);
+                ontwerpenBodyModel4.removeRow(tabelOntwerpen4.getSelectedRow());
 
-                String textB = "De beschikbaarheid is "+ Functions.beschikbaarheidOntwerp(selectedUptime, booleanWeb, booleanDb) + "%";
+                selectedUptimeDb.remove(selectedUptime);
+                selectedUptimeWeb.remove(selectedUptime);
+
+
+
+                String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeWeb, selectedUptimeDb) + "%";
                 labelBeschikbaarheidOntwerpen.setText(textB);
 
                 repaint();
-            } catch (ArrayIndexOutOfBoundsException u){
-                System.out.println("deleting null");
-            }
+        } else if (actionSource == knopResetOntwerpen) {
+            ontwerpenBodyModel4.setRowCount(0);
+
+            selectedUptimeDb.clear();
+            selectedUptimeWeb.clear();
+
+            String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeWeb, selectedUptimeDb) + "%";
+            labelBeschikbaarheidOntwerpen.setText(textB);
+
+            repaint();
         }
     }
+
+    private static void typeText(Robot robot, String text) {
+        for (char c : text.toCharArray()) {
+            int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+            robot.keyPress(keyCode);
+            robot.keyRelease(keyCode);
+        }
+    }
+
+    private static void write(String filename, ArrayList<Object> ontwerpNames, ArrayList<Object> ontwerpUptimes) throws IOException {
+        BufferedWriter outputWriter = null;
+        outputWriter = new BufferedWriter(new FileWriter(filename));
+
+        for (int i = 0; i < ontwerpNames.size(); i++) {
+            outputWriter.write(ontwerpNames.get(i) + " ");
+            outputWriter.write(ontwerpUptimes.get(i) + "/");
+            outputWriter.newLine();
+        }
+        outputWriter.flush();
+        outputWriter.close();
+    }
+
+    private static ArrayList<String> read(String filename) throws IOException {
+        ArrayList<String> readCombo = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("/");
+
+
+                // gooi alle gelezen dingksels in array
+                readCombo.addAll(Arrays.asList(parts));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return readCombo;
+    }
 }
+
