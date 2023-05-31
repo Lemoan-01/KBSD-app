@@ -14,13 +14,13 @@ public class Functions {
         double firewall = 0.99998;
 
         for (Object uptimeDb : uptimesDb) {
-            double i = ((double) uptimeDb);
+            double i = Double.parseDouble((uptimeDb).toString());
             double fragmentB = (1 - (i / 100));
 
             fragmentADb = fragmentB * fragmentADb;
         }
         for (Object uptimeWeb : uptimesWeb) {
-            double i = ((double) uptimeWeb);
+            double i = Double.parseDouble((uptimeWeb).toString());
             double fragmentB = (1 - (i / 100));
 
             fragmentAWeb = fragmentB * fragmentAWeb;

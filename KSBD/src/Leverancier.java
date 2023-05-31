@@ -5,7 +5,7 @@ public class Leverancier {
 
     public Leverancier(){
 
-        LeverancierDevice firwall1 = new LeverancierDevice("pfSense", "firewall", 99.99, 4000);
+        LeverancierDevice firwall1 = new LeverancierDevice("pfSense", "firewall", 99.998, 4000);
         leverancierDevices.add(firwall1); //0
 
         LeverancierDevice webserver1 = new LeverancierDevice("Hal9001W", "webserver", 80.00, 2200);

@@ -22,7 +22,7 @@ public class NetwerkDevice {
             return "Online";
         }
         else {
-            return "offline";
+            return "Offline";
         }
     }
 }

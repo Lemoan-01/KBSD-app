@@ -1,3 +1,4 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -5,8 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URI;
+import java.net.*;
 import java.util.ArrayList;
 import javax.swing.JFrame;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.awt.AWTException;
 import java.awt.Desktop;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 
 
@@ -29,11 +28,12 @@ public class GuiLooks extends JFrame implements ActionListener {
     private JButton knopVerversenMonitoring;
     private JButton knopGrafiekMonitoren;
     private JTextField opmerking;
-
+    private JTable tabelMonitor;
 
     //Berekenen
     private JButton knopBerekenBerekenen;
     private JLabel totaalKosten;
+    private JLabel foutInvoer = new JLabel("Ongeldig percentage");
     private double gewensteBeschikbaarheid = 0;
     private int tKosten = 0;
     private JTextArea gewenstPercentage;
@@ -75,6 +75,15 @@ public class GuiLooks extends JFrame implements ActionListener {
         //GUI
         scherm = new JFrame();
         scherm.setResizable(false);
+        scherm.setTitle("Nerdy 'o Monitor");
+        URL url = new URL("https://upload.wikimedia.org/wikipedia/en/c/cd/Gardenscapes_icon.png");
+        try {
+            Image image1 = ImageIO.read(url);
+            scherm.setIconImage(new ImageIcon(image1).getImage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         scherm.setSize(800, 600);
         scherm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         scherm.setVisible(true);
@@ -90,12 +99,12 @@ public class GuiLooks extends JFrame implements ActionListener {
         JEditorPane janet = new JEditorPane();
 
         //Data voor header
-        Object[] columsTabelMonitoring = {"Nep", "Nep"};
+        Object[] columsTabelMonitoring = {"Nep", "Nep", "Nep"};
         Object[][] dataMonitoring = {
-                {"pfSense", "193.167.12.3"}
+                {"pfSense", "192.168.1.1", "Online"}
         };
         Object[][] columsMonitoringHeader = {
-                {"Server", "IPv4"}
+                {"Server", "IPv4", "Status"}
         };
 
         //Knoppen
@@ -111,8 +120,11 @@ public class GuiLooks extends JFrame implements ActionListener {
         knopGrafiekMonitoren.setBounds(15, 30, 200, 30);
         knopGrafiekMonitoren.addActionListener(this);
 
-        //Opmerkingen
+        knopVerversenMonitoring = new JButton("Verversen");
+        knopVerversenMonitoring.setBounds(15,60,200,30);
+        knopVerversenMonitoring.addActionListener(this);
 
+        //Opmerkingen
         opmerking = new JTextField("Eventuele opmerkingen");
         opmerking.setBounds(475, 270, 275, 150);
 
@@ -122,7 +134,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         tabelMonitorHeader.setBackground(headerKleur);
 
         //tabelinhoud
-        JTable tabelMonitor = new JTable(dataMonitoring, columsTabelMonitoring);
+        tabelMonitor = new JTable(dataMonitoring, columsTabelMonitoring);
 
         //Iseditable uitzetten
         DefaultTableModel monitoringHeaderModel = new DefaultTableModel(columsMonitoringHeader, columsTabelMonitoring) {
@@ -339,6 +351,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         monitoring.add(knopVergelijkenMonitoring);
         monitoring.add(knopGrafiekMonitoren);
         monitoring.add(opmerking);
+        monitoring.add(knopVerversenMonitoring);
         tablad.addTab("Monitoring", monitoring);
 
         //add in all the stuff berekenen
@@ -348,6 +361,7 @@ public class GuiLooks extends JFrame implements ActionListener {
         berekenen.add(knopBerekenBerekenen);
         berekenen.add(gewenstPercentage);
         berekenen.add(totaalKosten);
+        berekenen.add(foutInvoer);
         tablad.addTab("Berekenen", berekenen);
 
         //add in all the stuff ontwerpen
@@ -379,6 +393,8 @@ public class GuiLooks extends JFrame implements ActionListener {
         if (actionSource == knopVergelijkenMonitoring) {
             new GuiLooksVergelijken();
             System.out.println("window vergelijken openen...");
+        } else if (actionSource == knopVerversenMonitoring) {
+            repaint();
         } else if (actionSource == knopGrafiekMonitoren) {
 
             //browsermoment
@@ -386,7 +402,7 @@ public class GuiLooks extends JFrame implements ActionListener {
                 try {
                     Desktop.getDesktop().browse(new URI("http://192.168.1.194:3000/d/rYdddlPWka/node-exporter-fullv2?orgId=1"));
 
-                    Thread.sleep(2000);
+                    Thread.sleep(2500);
 
                     Robot robot = new Robot();
                     typeText(robot, "guest");
@@ -417,7 +433,7 @@ public class GuiLooks extends JFrame implements ActionListener {
             getTitle.addActionListener(this);
             d.add(getTitle);
         } else if (actionSource == getTitle) {
-            this.dispose(); //no worki
+            ontwerpenBodyModel4.setRowCount(0);
             String fileName = naamLaden.getText();
 
             if (fileName != null && !fileName.equals(" ")) {
@@ -454,6 +470,7 @@ public class GuiLooks extends JFrame implements ActionListener {
 
             String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(uptimesF, uptimesW, uptimesDB) + "%";
             labelBeschikbaarheidOntwerpen.setText(textB);
+            repaint();
         } else if (actionSource == knopOpslaanOntwerpen) {
             //vraag titel ontwerp op
             JDialog d = new JDialog(scherm, "Naam: ");
@@ -477,7 +494,7 @@ public class GuiLooks extends JFrame implements ActionListener {
                 saveComboUptimes.add(ontwerpenBodyModel4.getValueAt(i, 1));
             }
         } else if (actionSource == setTitle) {
-            this.dispose();
+            ontwerpenBodyModel4.setRowCount(0);
             String fileName = naamOpslaan.getText();
 
             if (fileName != null && !fileName.equals(" ")) {
@@ -503,20 +520,30 @@ public class GuiLooks extends JFrame implements ActionListener {
             berekenenBodyModel.insertRow(0, firewall);
 
             gewensteBeschikbaarheid = Double.parseDouble(gewenstPercentage.getText());
-            Functions.backtrackEerst(gewensteBeschikbaarheid);
+            if (gewensteBeschikbaarheid < leverancierWilco.getLeverancierDevices().get(0).getUptime()){
+                Functions.backtrackEerst(gewensteBeschikbaarheid);
 
-            int kostenPrint = Functions.maxCost + leverancierWilco.getLeverancierDevices().get(0).getKostenEnkel();
-            totaalKosten.setText("Totale kosten: $" + kostenPrint);
+                int kostenPrint = Functions.maxCost + leverancierWilco.getLeverancierDevices().get(0).getKostenEnkel();
+                totaalKosten.setText("Totale kosten: $" + kostenPrint);
 
 
-            for (int j = 0; j < Functions.serversNaamFinal.size(); j++) { //combo kan niet groter dan 4 worden (no duplicates)
-                Object[] insertDevice = {
-                        Functions.serversNaamFinal.get(j), Functions.serversFunctieFinal.get(j), Functions.serversUptimeFinal.get(j), Functions.serversKostenFinal.get(j)
-                };
+                for (int j = 0; j < Functions.serversNaamFinal.size(); j++) { //combo kan niet groter dan 4 worden (no duplicates)
+                    Object[] insertDevice = {
+                            Functions.serversNaamFinal.get(j), Functions.serversFunctieFinal.get(j), Functions.serversUptimeFinal.get(j), Functions.serversKostenFinal.get(j)
+                    };
 
-                berekenenBodyModel.insertRow(0, insertDevice);
+                    berekenenBodyModel.insertRow(0, insertDevice);
+                }
+                foutInvoer.setVisible(false);
+                repaint();
+            } else {
+                foutInvoer.setBounds(15, 70, 200, 20);
+                foutInvoer.setForeground(Color.red);
+                foutInvoer.setVisible(true);
+
+                totaalKosten.setText("Totale kosten: 0$");
+                repaint();
             }
-            repaint();
         } else if (actionSource == knopToevoegenOntwerpen) {
 
             //extract de data van geselecteerde row en voeg die toe aan tabel 4
@@ -567,8 +594,6 @@ public class GuiLooks extends JFrame implements ActionListener {
 
                 selectedUptimeDb.remove(selectedUptime);
                 selectedUptimeWeb.remove(selectedUptime);
-
-
 
                 String textB = "De beschikbaarheid is " + Functions.beschikbaarheidOntwerp(selectedUptimeFirewall, selectedUptimeWeb, selectedUptimeDb) + "%";
                 labelBeschikbaarheidOntwerpen.setText(textB);
